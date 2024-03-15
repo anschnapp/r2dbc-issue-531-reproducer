@@ -2,6 +2,7 @@ package com.example.r2dbcissue531reproducer;
 
 import com.example.r2dbcissue531reproducer.entity.TestEntity;
 import com.example.r2dbcissue531reproducer.repository.TestEntityRepository;
+import com.example.r2dbcissue531reproducer.service.TestEntityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,14 @@ import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import reactor.core.publisher.Flux;
 
 @SpringBootTest
 @Testcontainers
 class R2dbcIssue531ReproducerApplicationTests {
 
+    @Autowired
+    TestEntityService service;
     @Autowired
     TestEntityRepository repository;
     @Autowired
@@ -50,7 +54,10 @@ class R2dbcIssue531ReproducerApplicationTests {
 
     @Test
     void reproduceStuckInTx() {
-
+        Flux.range(0, 1000)
+                .parallel()
+                .flatMap(i -> service.doSelectInTx())
+                .sequential()
+                .collectList().block();
     }
-
 }
