@@ -17,6 +17,7 @@ import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 @SpringBootTest
 @Testcontainers
@@ -54,10 +55,23 @@ class R2dbcIssue531ReproducerApplicationTests {
 
     @Test
     void reproduceStuckInTx() {
-        Flux.range(0, 1000)
-                .parallel()
-                .flatMap(i -> service.doSelectInTx())
-                .sequential()
+        Flux.range(0, 10)
+                .flatMap(i -> service.doProblematicSequence(i))
+                // will hang on resolving block on some down latch
                 .collectList().block();
+    }
+
+    @Test
+    void reproduceStuckInTxWithoutBlock() throws InterruptedException {
+        Flux.range(0, 10)
+                .flatMap(i -> service.doProblematicSequence(i))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnComplete(() -> System.out.println("will never happen"))
+                .subscribe();
+
+        // 10 minutes to just view what happened
+        Thread.sleep(60 * 10 * 1000);
+
+        // we will see that it dont' finish on a more complex example we observed that all following queries will not get executed
     }
 }

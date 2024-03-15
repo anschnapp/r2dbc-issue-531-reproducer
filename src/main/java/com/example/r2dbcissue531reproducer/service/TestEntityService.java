@@ -16,12 +16,19 @@ public class TestEntityService {
         this.testEntityRepository = testEntityRepository;
     }
 
-    public Mono<TestEntity> doSelectInTx() {
+    public Mono<TestEntity> doProblematicSequence(int round) {
         return transactionalOperator
-                .transactional(doSelect());
+                .transactional(doProblematicSequenceWithouttx(round));
     }
 
-    private Mono<TestEntity> doSelect() {
-        return testEntityRepository.findByName("first test entity");
+    private Mono<TestEntity> doProblematicSequenceWithouttx(int round) {
+        return Mono.fromFuture(writeAndReadOperation(round).toFuture());
     }
+
+    private Mono<TestEntity> writeAndReadOperation(int round) {
+        return testEntityRepository.save(new TestEntity("name entity round: " + round))
+                .flatMap((entity) -> testEntityRepository.findByName("name entity round: " + round));
+    }
+
+
 }
