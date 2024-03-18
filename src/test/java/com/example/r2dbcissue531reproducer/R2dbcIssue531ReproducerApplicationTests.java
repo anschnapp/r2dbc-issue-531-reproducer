@@ -31,7 +31,7 @@ class R2dbcIssue531ReproducerApplicationTests {
     DatabaseClient databaseClient;
 
     @Container
-    private static final PostgreSQLContainer<?> postgresSQLContainer = new PostgreSQLContainer<>()
+    private static final PostgreSQLContainer<?> postgresSQLContainer = new PostgreSQLContainer<>("postgres:16.2")
             .withUsername("user")
             .withPassword("pass")
             .withDatabaseName("database_name")
