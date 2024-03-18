@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
@@ -31,17 +31,14 @@ class R2dbcIssue531ReproducerApplicationTests {
     DatabaseClient databaseClient;
 
     @Container
-    private static final PostgreSQLContainer<?> postgresSQLContainer = new PostgreSQLContainer<>("postgres:16.2")
+    private static final MySQLContainer<?> postgresSQLContainer = new MySQLContainer<>()
             .withUsername("user")
             .withPassword("pass")
-            .withDatabaseName("database_name")
-            .waitingFor(new WaitAllStrategy()
-                    .withStrategy(new LogMessageWaitStrategy().withRegEx(".*database system is ready to accept connections.*\\s"))
-                    .withStrategy(new HostPortWaitStrategy()));
+            .withDatabaseName("database_name");
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("spring.r2dbc.url", () -> "r2dbc:postgresql://127.0.0.1:" + postgresSQLContainer.getMappedPort(5432) + "/database_name");
+        registry.add("spring.r2dbc.url", () -> "r2dbc:mysql://127.0.0.1:" + postgresSQLContainer.getMappedPort(3306) + "/database_name");
     }
 
 
